@@ -64,7 +64,7 @@ export default function Navbar({
                 </Button>
                 <button onClick={() => setActiveSection('profile')}>
                   <Avatar className="w-10 h-10 border-2 border-primary">
-                    <AvatarImage src={user.avatar_url || 'https://cdn.poehali.dev/projects/46d2a724-417f-4368-98d2-7fd3076df938/files/a679ccdf-4b2b-4e48-9ec0-9f73c4e35dfb.jpg'} />
+                    <AvatarImage src={user.avatar_url} />
                     <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </button>

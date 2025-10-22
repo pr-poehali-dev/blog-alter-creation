@@ -65,8 +65,21 @@ export default function HomePage({ user, posts, stories, setActiveSection, setSh
 
       <div>
         <h3 className="text-3xl font-bold mb-6">Последние посты</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
+        {posts.length === 0 ? (
+          <div className="text-center py-12">
+            <Icon name="FileText" size={64} className="mx-auto mb-4 text-muted-foreground" />
+            <p className="text-xl text-muted-foreground mb-4">Пока нет постов</p>
+            <p className="text-sm text-muted-foreground mb-6">Будьте первым, кто поделится своей историей!</p>
+            <Button
+              onClick={() => user ? setActiveSection('create') : setShowAuthDialog(true)}
+              className="bg-gradient-to-r from-primary to-secondary"
+            >
+              Создать первый пост
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {posts.map((post) => (
             <Card key={post.id} className="overflow-hidden hover:shadow-xl transition-shadow group">
               <div className="aspect-video overflow-hidden bg-gradient-to-br from-primary to-secondary">
                 {post.cover_image_url ? (
@@ -84,7 +97,7 @@ export default function HomePage({ user, posts, stories, setActiveSection, setSh
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-3">
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={post.avatar_url || 'https://cdn.poehali.dev/projects/46d2a724-417f-4368-98d2-7fd3076df938/files/a679ccdf-4b2b-4e48-9ec0-9f73c4e35dfb.jpg'} />
+                    <AvatarImage src={post.avatar_url} />
                     <AvatarFallback>{post.username?.[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -114,8 +127,9 @@ export default function HomePage({ user, posts, stories, setActiveSection, setSh
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -10,8 +10,14 @@ export default function BlogsPage({ posts }: BlogsPageProps) {
   return (
     <div>
       <h2 className="text-4xl font-bold mb-8">Все блоги</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post) => (
+      {posts.length === 0 ? (
+        <div className="text-center py-12">
+          <Icon name="BookOpen" size={64} className="mx-auto mb-4 text-muted-foreground" />
+          <p className="text-xl text-muted-foreground">Пока нет блогов</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
           <Card key={post.id} className="overflow-hidden hover:shadow-xl transition-shadow group">
             <div className="aspect-video overflow-hidden bg-gradient-to-br from-primary to-secondary">
               <div className="w-full h-full flex items-center justify-center">
@@ -25,8 +31,9 @@ export default function BlogsPage({ posts }: BlogsPageProps) {
               </p>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
