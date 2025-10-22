@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "Get all posts",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "bodyMatcher": "none"
+    },
+    {
+      "name": "Create new post",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "user_id": 1,
+        "title": "My First Blog Post",
+        "content": "This is the content of my first blog post",
+        "excerpt": "A short excerpt",
+        "post_type": "blog",
+        "published": true
+      },
+      "expectedStatus": 200,
+      "bodyMatcher": "none"
+    }
+  ]
+}
