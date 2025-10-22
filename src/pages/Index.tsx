@@ -19,7 +19,8 @@ export default function Index() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    const savedToken = localStorage.getItem('token');
+    if (savedUser && savedToken) {
       setUser(JSON.parse(savedUser));
     }
     loadPosts();
@@ -70,11 +71,12 @@ export default function Index() {
       });
 
       const result = await response.json();
-      if (response.ok && result.user) {
+      if (response.ok && result.user && result.token) {
         setUser(result.user);
         localStorage.setItem('user', JSON.stringify(result.user));
         localStorage.setItem('token', result.token);
         setShowAuthDialog(false);
+        setActiveSection('profile');
       } else {
         alert(result.error || 'Ошибка авторизации');
       }
