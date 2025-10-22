@@ -7,11 +7,11 @@ export default function AboutPage() {
     <div className="max-w-3xl mx-auto">
       <Card className="p-8">
         <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          О платформе
+          О Vega Blog
         </h2>
         <div className="space-y-4 text-lg">
           <p>
-            ModernBlog — это современная платформа для создания и публикации контента.
+            Vega Blog — это современная платформа для создания и публикации контента.
             Мы объединяем авторов и читателей со всего мира.
           </p>
           <p>

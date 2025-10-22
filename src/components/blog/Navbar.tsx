@@ -32,7 +32,7 @@ export default function Navbar({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              ModernBlog
+              Vega Blog
             </h1>
             <div className="hidden md:flex gap-6">
               {['home', 'blogs', 'authors', 'about'].map((section) => (
