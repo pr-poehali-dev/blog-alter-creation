@@ -128,6 +128,11 @@ export default function Index() {
     localStorage.removeItem('token');
   };
 
+  const handleProfileUpdate = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/10">
       <Navbar
@@ -157,7 +162,7 @@ export default function Index() {
         )}
 
         {activeSection === 'profile' && (
-          <ProfilePage user={user} posts={posts} handleLogout={handleLogout} />
+          <ProfilePage user={user} posts={posts} handleLogout={handleLogout} onProfileUpdate={handleProfileUpdate} />
         )}
 
         {activeSection === 'blogs' && <BlogsPage posts={posts} />}

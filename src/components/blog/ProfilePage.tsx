@@ -1,18 +1,86 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
-import { User, Post } from '@/lib/types';
+import { User, Post, AUTH_URL } from '@/lib/types';
 
 interface ProfilePageProps {
   user: User | null;
   posts: Post[];
   handleLogout: () => void;
+  onProfileUpdate: (user: User) => void;
 }
 
-export default function ProfilePage({ user, posts, handleLogout }: ProfilePageProps) {
+export default function ProfilePage({ user, posts, handleLogout, onProfileUpdate }: ProfilePageProps) {
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: user?.full_name || '',
+    bio: user?.bio || '',
+    avatar_url: user?.avatar_url || '',
+  });
+
   if (!user) return null;
+
+  const handleGenerateAvatar = async () => {
+    const prompt = window.prompt('Опишите желаемую аватарку (например: "профессиональное фото космонавта", "абстрактный геометрический портрет"):');
+    if (!prompt) return;
+
+    setIsGeneratingAvatar(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/41024847-9bfe-411d-b67b-40fb50891f8c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        setEditForm({ ...editForm, avatar_url: data.url });
+      } else {
+        alert('Ошибка генерации изображения');
+      }
+    } catch (error) {
+      console.error('Error generating avatar:', error);
+      alert('Ошибка соединения');
+    } finally {
+      setIsGeneratingAvatar(false);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(AUTH_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          full_name: editForm.full_name,
+          bio: editForm.bio,
+          avatar_url: editForm.avatar_url,
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.user) {
+        onProfileUpdate(result.user);
+        setShowEditDialog(false);
+        alert('Профиль обновлён!');
+      } else {
+        alert(result.error || 'Ошибка обновления профиля');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert('Ошибка соединения');
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -26,10 +94,75 @@ export default function ProfilePage({ user, posts, handleLogout }: ProfilePagePr
             <h2 className="text-3xl font-bold mb-2">{user.full_name}</h2>
             <p className="text-muted-foreground mb-4">@{user.username}</p>
             <p className="text-sm mb-4">{user.bio || 'Нет описания'}</p>
-            <Button onClick={handleLogout} variant="outline">
-              <Icon name="LogOut" size={16} className="mr-2" />
-              Выйти
-            </Button>
+            <div className="flex gap-2">
+              <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Icon name="Edit" size={16} className="mr-2" />
+                    Редактировать
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Редактировать профиль</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Полное имя</label>
+                      <Input
+                        value={editForm.full_name}
+                        onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                        placeholder="Ваше имя"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">О себе</label>
+                      <Textarea
+                        value={editForm.bio}
+                        onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                        placeholder="Расскажите о себе..."
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Аватарка</label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={editForm.avatar_url}
+                          onChange={(e) => setEditForm({ ...editForm, avatar_url: e.target.value })}
+                          placeholder="URL изображения"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleGenerateAvatar}
+                          disabled={isGeneratingAvatar}
+                          variant="outline"
+                          className="shrink-0"
+                        >
+                          <Icon name="Sparkles" size={16} />
+                        </Button>
+                      </div>
+                      {editForm.avatar_url && (
+                        <div className="mt-3">
+                          <Avatar className="w-20 h-20 border-2 border-primary">
+                            <AvatarImage src={editForm.avatar_url} />
+                            <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                        </div>
+                      )}
+                    </div>
+                    <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary">
+                      Сохранить изменения
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              <Button onClick={handleLogout} variant="outline">
+                <Icon name="LogOut" size={16} className="mr-2" />
+                Выйти
+              </Button>
+            </div>
           </div>
         </div>
 

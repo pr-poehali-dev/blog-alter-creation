@@ -31,7 +31,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
                 'Access-Control-Max-Age': '86400'
             },
@@ -153,6 +153,56 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps(dict(user), default=str),
                     'isBase64Encoded': False
                 }
+        
+        elif method == 'PUT':
+            body_data = json.loads(event.get('body', '{}'))
+            user_id = body_data.get('user_id')
+            
+            if not user_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Missing user_id'}),
+                    'isBase64Encoded': False
+                }
+            
+            update_fields = []
+            update_values = []
+            
+            if 'full_name' in body_data:
+                update_fields.append('full_name = %s')
+                update_values.append(body_data['full_name'])
+            
+            if 'bio' in body_data:
+                update_fields.append('bio = %s')
+                update_values.append(body_data['bio'])
+            
+            if 'avatar_url' in body_data:
+                update_fields.append('avatar_url = %s')
+                update_values.append(body_data['avatar_url'])
+            
+            if not update_fields:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'No fields to update'}),
+                    'isBase64Encoded': False
+                }
+            
+            update_fields.append('updated_at = CURRENT_TIMESTAMP')
+            update_values.append(user_id)
+            
+            query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s RETURNING id, email, username, full_name, bio, avatar_url"
+            cur.execute(query, tuple(update_values))
+            updated_user = dict(cur.fetchone())
+            conn.commit()
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'user': updated_user}),
+                'isBase64Encoded': False
+            }
         
         cur.close()
         conn.close()
