@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { User } from '@/lib/types';
+import MusicDialog from '@/components/music/MusicDialog';
 
 interface NavbarProps {
   user: User | null;
@@ -28,6 +30,8 @@ export default function Navbar({
   handleAuth,
   unreadCount = 0,
 }: NavbarProps) {
+  const [showMusicDialog, setShowMusicDialog] = useState(false);
+
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b">
       <div className="container mx-auto px-4 py-4">
@@ -67,6 +71,15 @@ export default function Navbar({
           <div className="flex items-center gap-4">
             {user ? (
               <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowMusicDialog(true)}
+                  className="hover:text-primary transition-colors"
+                  title="Моя музыка"
+                >
+                  <Icon name="Music" size={20} />
+                </Button>
                 <Button
                   onClick={() => setActiveSection('create')}
                   className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
@@ -118,6 +131,7 @@ export default function Navbar({
           </div>
         </div>
       </div>
+      <MusicDialog open={showMusicDialog} onOpenChange={setShowMusicDialog} user={user} />
     </nav>
   );
 }
