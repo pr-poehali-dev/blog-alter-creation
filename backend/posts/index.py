@@ -22,7 +22,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
                 'Access-Control-Max-Age': '86400'
             },
@@ -178,6 +178,47 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     RETURNING id
                 """, (story_id, viewer_id))
                 
+                conn.commit()
+                cur.close()
+                conn.close()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'delete_story':
+                story_id = body_data.get('story_id')
+                user_id = body_data.get('user_id')
+                
+                cur.execute("""
+                    SELECT user_id FROM stories WHERE id = %s
+                """, (story_id,))
+                story = cur.fetchone()
+                
+                if not story:
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Story not found'}),
+                        'isBase64Encoded': False
+                    }
+                
+                if story['user_id'] != user_id:
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 403,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Not authorized'}),
+                        'isBase64Encoded': False
+                    }
+                
+                cur.execute("UPDATE stories SET expires_at = NOW() WHERE id = %s", (story_id,))
                 conn.commit()
                 cur.close()
                 conn.close()

@@ -84,6 +84,43 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
     }
   };
 
+  const handleDeleteStory = async () => {
+    if (!currentUserId || userId !== currentUserId) return;
+    
+    const confirmed = window.confirm('Удалить эту историю?');
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/73b67c32-f278-4cd4-8c63-4e2534d8f137', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_story',
+          story_id: stories[currentIndex].id,
+          user_id: currentUserId
+        })
+      });
+
+      if (response.ok) {
+        const updatedStories = stories.filter((_, index) => index !== currentIndex);
+        if (updatedStories.length === 0) {
+          onClose();
+          window.location.reload();
+        } else {
+          setStories(updatedStories);
+          if (currentIndex >= updatedStories.length) {
+            setCurrentIndex(updatedStories.length - 1);
+          }
+        }
+      } else {
+        alert('Ошибка удаления');
+      }
+    } catch (error) {
+      console.error('Error deleting story:', error);
+      alert('Ошибка соединения');
+    }
+  };
+
   const startProgress = () => {
     setProgress(0);
     if (progressInterval.current) clearInterval(progressInterval.current);
@@ -183,6 +220,14 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
               >
                 <Icon name="Eye" size={20} />
                 <span className="text-sm">{currentStory.views.length}</span>
+              </button>
+            )}
+            {userId === currentUserId && (
+              <button
+                onClick={handleDeleteStory}
+                className="text-white hover:opacity-75 transition-opacity"
+              >
+                <Icon name="Trash2" size={20} />
               </button>
             )}
             <button
