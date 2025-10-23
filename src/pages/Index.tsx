@@ -7,6 +7,9 @@ import BlogsPage from '@/components/blog/BlogsPage';
 import AuthorsPage from '@/components/blog/AuthorsPage';
 import AboutPage from '@/components/blog/AboutPage';
 import Footer from '@/components/blog/Footer';
+import StoriesBar from '@/components/stories/StoriesBar';
+import StoryViewer from '@/components/stories/StoryViewer';
+import CreateStoryDialog from '@/components/stories/CreateStoryDialog';
 import { User, Post, AUTH_URL, POSTS_URL } from '@/lib/types';
 
 export default function Index() {
@@ -16,6 +19,9 @@ export default function Index() {
   const [activeSection, setActiveSection] = useState('home');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [viewingStoryUserId, setViewingStoryUserId] = useState<number | null>(null);
+  const [allStoryUsers, setAllStoryUsers] = useState<number[]>([]);
+  const [showCreateStory, setShowCreateStory] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -133,6 +139,35 @@ export default function Index() {
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
+  const handleStoryClick = (userId: number, allStories: any[]) => {
+    setViewingStoryUserId(userId);
+    setAllStoryUsers(allStories.map(s => s.user_id));
+  };
+
+  const handleNextStory = () => {
+    if (!viewingStoryUserId) return;
+    const currentIndex = allStoryUsers.indexOf(viewingStoryUserId);
+    if (currentIndex < allStoryUsers.length - 1) {
+      setViewingStoryUserId(allStoryUsers[currentIndex + 1]);
+    } else {
+      setViewingStoryUserId(null);
+    }
+  };
+
+  const handlePrevStory = () => {
+    if (!viewingStoryUserId) return;
+    const currentIndex = allStoryUsers.indexOf(viewingStoryUserId);
+    if (currentIndex > 0) {
+      setViewingStoryUserId(allStoryUsers[currentIndex - 1]);
+    } else {
+      setViewingStoryUserId(null);
+    }
+  };
+
+  const refreshStories = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/10">
       <Navbar
@@ -144,6 +179,12 @@ export default function Index() {
         isLogin={isLogin}
         setIsLogin={setIsLogin}
         handleAuth={handleAuth}
+      />
+
+      <StoriesBar
+        currentUserId={user?.id || null}
+        onStoryClick={handleStoryClick}
+        onCreateStory={() => setShowCreateStory(true)}
       />
 
       <main className="container mx-auto px-4 py-8">
@@ -173,6 +214,23 @@ export default function Index() {
       </main>
 
       <Footer />
+
+      {viewingStoryUserId && (
+        <StoryViewer
+          userId={viewingStoryUserId}
+          currentUserId={user?.id || null}
+          onClose={() => setViewingStoryUserId(null)}
+          onNext={handleNextStory}
+          onPrev={handlePrevStory}
+        />
+      )}
+
+      <CreateStoryDialog
+        user={user}
+        open={showCreateStory}
+        onClose={() => setShowCreateStory(false)}
+        onSuccess={refreshStories}
+      />
     </div>
   );
 }
