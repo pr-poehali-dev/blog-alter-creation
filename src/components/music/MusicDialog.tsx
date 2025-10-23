@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
@@ -10,6 +10,7 @@ import CreatePlaylistForm from './CreatePlaylistForm';
 import TrackItem from './TrackItem';
 import PlaylistItem from './PlaylistItem';
 import EmptyState from './EmptyState';
+import SearchBar from './SearchBar';
 
 interface MusicDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
   const [showPlaylistForm, setShowPlaylistForm] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
   const [view, setView] = useState<'all' | 'playlists'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleAddTrack = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -135,9 +137,21 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
     return tracks.filter(t => playlist.trackIds.includes(t.id));
   };
 
-  const displayTracks = selectedPlaylist 
-    ? getPlaylistTracks(selectedPlaylist)
-    : tracks;
+  const filterTracks = (trackList: Track[]) => {
+    if (!searchQuery.trim()) return trackList;
+    const query = searchQuery.toLowerCase();
+    return trackList.filter(track => 
+      track.title.toLowerCase().includes(query) || 
+      track.artist.toLowerCase().includes(query)
+    );
+  };
+
+  const displayTracks = useMemo(() => {
+    const baseList = selectedPlaylist 
+      ? getPlaylistTracks(selectedPlaylist)
+      : tracks;
+    return filterTracks(baseList);
+  }, [selectedPlaylist, tracks, searchQuery, playlists]);
 
   if (!user) return null;
 
@@ -235,11 +249,17 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                     />
                   )}
 
+                  <SearchBar
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                  />
+
                   <div className="space-y-2">
                     {displayTracks.length === 0 ? (
                       <EmptyState
                         icon="Music"
-                        title="В плейлисте пока нет треков"
+                        title={searchQuery ? "Треки не найдены" : "В плейлисте пока нет треков"}
+                        description={searchQuery ? "Попробуйте изменить поисковый запрос" : undefined}
                       />
                     ) : (
                       displayTracks.map((track) => (
@@ -301,6 +321,11 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                 />
               )}
 
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+
               <div className="space-y-2">
                 {tracks.length === 0 ? (
                   <EmptyState
@@ -308,8 +333,14 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                     title="У вас пока нет треков"
                     description="Добавьте музыку, чтобы слушать её здесь"
                   />
+                ) : displayTracks.length === 0 ? (
+                  <EmptyState
+                    icon="Search"
+                    title="Треки не найдены"
+                    description="Попробуйте изменить поисковый запрос"
+                  />
                 ) : (
-                  tracks.map((track) => {
+                  displayTracks.map((track) => {
                     const currentPlaylistId = getTrackPlaylist(track.id);
                     return (
                       <TrackItem
