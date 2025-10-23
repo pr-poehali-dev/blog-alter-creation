@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
+import ChatDialog from '@/components/messages/ChatDialog';
 
 interface Story {
   id: number;
@@ -33,6 +34,7 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showViewers, setShowViewers] = useState(false);
+  const [showReplyDialog, setShowReplyDialog] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const STORY_DURATION = 5000;
 
@@ -213,6 +215,15 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
           </div>
 
           <div className="flex items-center gap-2">
+            {userId !== currentUserId && currentUserId && (
+              <button
+                onClick={() => setShowReplyDialog(true)}
+                className="text-white hover:opacity-75 transition-opacity"
+                title="Ответить"
+              >
+                <Icon name="Send" size={20} />
+              </button>
+            )}
             {userId === currentUserId && currentStory.views && currentStory.views.length > 0 && (
               <button
                 onClick={() => setShowViewers(true)}
@@ -299,6 +310,16 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
             </div>
           </div>
         </div>
+      )}
+
+      {showReplyDialog && currentUserId && (
+        <ChatDialog
+          currentUserId={currentUserId}
+          otherUserId={userId}
+          onClose={() => setShowReplyDialog(false)}
+          initialMessage="📸 Ответ на историю: "
+          storyId={currentStory.id}
+        />
       )}
     </div>
   );

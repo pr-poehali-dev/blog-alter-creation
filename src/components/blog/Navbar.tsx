@@ -35,7 +35,7 @@ export default function Navbar({
               Vega Blog
             </h1>
             <div className="hidden md:flex gap-6">
-              {['home', 'blogs', 'authors', 'about'].map((section) => (
+              {['home', 'blogs', 'authors', 'messages', 'about'].map((section) => (
                 <button
                   key={section}
                   onClick={() => setActiveSection(section)}
@@ -46,6 +46,7 @@ export default function Navbar({
                   {section === 'home' && 'Главная'}
                   {section === 'blogs' && 'Блоги'}
                   {section === 'authors' && 'Авторы'}
+                  {section === 'messages' && 'Сообщения'}
                   {section === 'about' && 'О нас'}
                 </button>
               ))}

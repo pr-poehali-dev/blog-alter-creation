@@ -10,6 +10,7 @@ import Footer from '@/components/blog/Footer';
 import StoriesBar from '@/components/stories/StoriesBar';
 import StoryViewer from '@/components/stories/StoryViewer';
 import CreateStoryDialog from '@/components/stories/CreateStoryDialog';
+import MessagesPage from '@/components/messages/MessagesPage';
 import { User, Post, AUTH_URL, POSTS_URL } from '@/lib/types';
 
 export default function Index() {
@@ -209,6 +210,8 @@ export default function Index() {
         {activeSection === 'blogs' && <BlogsPage posts={posts} />}
 
         {activeSection === 'authors' && <AuthorsPage posts={posts} />}
+
+        {activeSection === 'messages' && <MessagesPage user={user} />}
 
         {activeSection === 'about' && <AboutPage />}
       </main>

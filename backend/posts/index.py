@@ -23,7 +23,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
+                'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
@@ -41,6 +41,83 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             user_id = params.get('user_id')
             limit = int(params.get('limit', '20'))
             stories_mode = params.get('stories')
+            messages_mode = params.get('messages')
+            chat_with = params.get('chat_with')
+            
+            if messages_mode:
+                if not user_id:
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'user_id required'}),
+                        'isBase64Encoded': False
+                    }
+                
+                if chat_with:
+                    cur.execute("""
+                        SELECT m.*, 
+                               sender.username as sender_username, 
+                               sender.avatar_url as sender_avatar,
+                               receiver.username as receiver_username,
+                               receiver.avatar_url as receiver_avatar
+                        FROM messages m
+                        JOIN users sender ON m.sender_id = sender.id
+                        JOIN users receiver ON m.receiver_id = receiver.id
+                        WHERE (m.sender_id = %s AND m.receiver_id = %s) 
+                           OR (m.sender_id = %s AND m.receiver_id = %s)
+                        ORDER BY m.created_at ASC
+                    """, (user_id, chat_with, chat_with, user_id))
+                    
+                    cur.execute("""
+                        UPDATE messages 
+                        SET is_read = TRUE 
+                        WHERE receiver_id = %s AND sender_id = %s AND is_read = FALSE
+                    """, (user_id, chat_with))
+                    conn.commit()
+                else:
+                    cur.execute("""
+                        WITH last_messages AS (
+                            SELECT DISTINCT ON (
+                                CASE 
+                                    WHEN sender_id = %s THEN receiver_id 
+                                    ELSE sender_id 
+                                END
+                            ) 
+                            m.*,
+                            CASE 
+                                WHEN sender_id = %s THEN receiver_id 
+                                ELSE sender_id 
+                            END as other_user_id
+                            FROM messages m
+                            WHERE sender_id = %s OR receiver_id = %s
+                            ORDER BY 
+                                CASE 
+                                    WHEN sender_id = %s THEN receiver_id 
+                                    ELSE sender_id 
+                                END,
+                                created_at DESC
+                        )
+                        SELECT lm.*, u.username, u.avatar_url,
+                               (SELECT COUNT(*) FROM messages 
+                                WHERE receiver_id = %s 
+                                AND sender_id = lm.other_user_id 
+                                AND is_read = FALSE) as unread_count
+                        FROM last_messages lm
+                        JOIN users u ON u.id = lm.other_user_id
+                        ORDER BY lm.created_at DESC
+                    """, (user_id, user_id, user_id, user_id, user_id, user_id))
+                
+                messages = [dict(row) for row in cur.fetchall()]
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps(messages, default=str),
+                    'isBase64Encoded': False
+                }
             
             if stories_mode:
                 if user_id:
@@ -186,6 +263,40 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({'success': True}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'send_message':
+                sender_id = body_data.get('sender_id')
+                receiver_id = body_data.get('receiver_id')
+                content = body_data.get('content')
+                story_id = body_data.get('story_id')
+                
+                if not all([sender_id, receiver_id, content]):
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Missing required fields'}),
+                        'isBase64Encoded': False
+                    }
+                
+                cur.execute("""
+                    INSERT INTO messages (sender_id, receiver_id, content, story_id)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id, sender_id, receiver_id, content, story_id, is_read, created_at
+                """, (sender_id, receiver_id, content, story_id))
+                
+                message = dict(cur.fetchone())
+                conn.commit()
+                cur.close()
+                conn.close()
+                
+                return {
+                    'statusCode': 201,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps(message, default=str),
                     'isBase64Encoded': False
                 }
             
