@@ -132,9 +132,19 @@ export default function ProfilePage({ user, posts, handleLogout, onProfileUpdate
                       <label className="text-sm font-medium mb-2 block">Аватарка</label>
                       <div className="flex gap-2">
                         <Input
-                          value={editForm.avatar_url}
-                          onChange={(e) => setEditForm({ ...editForm, avatar_url: e.target.value })}
-                          placeholder="URL изображения"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setEditForm({ ...editForm, avatar_url: reader.result as string });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="cursor-pointer"
                         />
                         <Button
                           type="button"
@@ -142,6 +152,7 @@ export default function ProfilePage({ user, posts, handleLogout, onProfileUpdate
                           disabled={isGeneratingAvatar}
                           variant="outline"
                           className="shrink-0"
+                          title="Сгенерировать с помощью ИИ"
                         >
                           <Icon name="Sparkles" size={16} />
                         </Button>

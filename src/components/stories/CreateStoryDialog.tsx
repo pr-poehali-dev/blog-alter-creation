@@ -81,12 +81,22 @@ export default function CreateStoryDialog({ user, open, onClose, onSuccess }: Cr
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">URL изображения</label>
+            <label className="text-sm font-medium">Изображение для Story</label>
             <div className="flex gap-2">
               <Input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setImageUrl(reader.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="cursor-pointer"
               />
               <Button
                 type="button"
@@ -94,6 +104,7 @@ export default function CreateStoryDialog({ user, open, onClose, onSuccess }: Cr
                 onClick={handleGenerateImage}
                 disabled={isGenerating}
                 className="shrink-0"
+                title="Сгенерировать с помощью ИИ"
               >
                 {isGenerating ? (
                   <Icon name="Loader2" size={16} className="animate-spin" />
