@@ -11,6 +11,7 @@ import StoriesBar from '@/components/stories/StoriesBar';
 import StoryViewer from '@/components/stories/StoryViewer';
 import CreateStoryDialog from '@/components/stories/CreateStoryDialog';
 import MessagesPage from '@/components/messages/MessagesPage';
+import ReelsPage from '@/components/reels/ReelsPage';
 import { User, Post, AUTH_URL, POSTS_URL, MESSAGES_URL } from '@/lib/types';
 
 export default function Index() {
@@ -223,13 +224,15 @@ export default function Index() {
         unreadCount={unreadCount}
       />
 
-      <StoriesBar
-        currentUserId={user?.id || null}
-        onStoryClick={handleStoryClick}
-        onCreateStory={() => setShowCreateStory(true)}
-      />
+      {activeSection !== 'reels' && (
+        <StoriesBar
+          currentUserId={user?.id || null}
+          onStoryClick={handleStoryClick}
+          onCreateStory={() => setShowCreateStory(true)}
+        />
+      )}
 
-      <main className="container mx-auto px-4 py-8">
+      <main className={activeSection === 'reels' ? '' : 'container mx-auto px-4 py-8'}>
         {activeSection === 'home' && (
           <HomePage
             user={user}
@@ -262,9 +265,11 @@ export default function Index() {
         {activeSection === 'messages' && <MessagesPage user={user} onUnreadCountChange={setUnreadCount} />}
 
         {activeSection === 'about' && <AboutPage />}
+
+        {activeSection === 'reels' && <ReelsPage user={user} />}
       </main>
 
-      <Footer />
+      {activeSection !== 'reels' && <Footer />}
 
       {viewingStoryUserId && (
         <StoryViewer
