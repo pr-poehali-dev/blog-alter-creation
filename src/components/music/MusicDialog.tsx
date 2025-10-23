@@ -11,6 +11,7 @@ import TrackItem from './TrackItem';
 import PlaylistItem from './PlaylistItem';
 import EmptyState from './EmptyState';
 import SearchBar from './SearchBar';
+import SortMenu, { SortOption } from './SortMenu';
 
 interface MusicDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
   const [view, setView] = useState<'all' | 'playlists'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('date-desc');
 
   const handleAddTrack = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -146,12 +148,33 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
     );
   };
 
+  const sortTracks = (trackList: Track[]) => {
+    const sorted = [...trackList];
+    switch (sortOption) {
+      case 'date-desc':
+        return sorted.reverse();
+      case 'date-asc':
+        return sorted;
+      case 'title-asc':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+      case 'title-desc':
+        return sorted.sort((a, b) => b.title.localeCompare(a.title, 'ru'));
+      case 'artist-asc':
+        return sorted.sort((a, b) => a.artist.localeCompare(b.artist, 'ru'));
+      case 'artist-desc':
+        return sorted.sort((a, b) => b.artist.localeCompare(a.artist, 'ru'));
+      default:
+        return sorted;
+    }
+  };
+
   const displayTracks = useMemo(() => {
     const baseList = selectedPlaylist 
       ? getPlaylistTracks(selectedPlaylist)
       : tracks;
-    return filterTracks(baseList);
-  }, [selectedPlaylist, tracks, searchQuery, playlists]);
+    const filtered = filterTracks(baseList);
+    return sortTracks(filtered);
+  }, [selectedPlaylist, tracks, searchQuery, sortOption, playlists]);
 
   if (!user) return null;
 
@@ -249,10 +272,16 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                     />
                   )}
 
-                  <SearchBar
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                  />
+                  <div className="flex gap-2">
+                    <SearchBar
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                    />
+                    <SortMenu
+                      currentSort={sortOption}
+                      onSortChange={setSortOption}
+                    />
+                  </div>
 
                   <div className="space-y-2">
                     {displayTracks.length === 0 ? (
@@ -321,10 +350,16 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                 />
               )}
 
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-              />
+              <div className="flex gap-2">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
+                <SortMenu
+                  currentSort={sortOption}
+                  onSortChange={setSortOption}
+                />
+              </div>
 
               <div className="space-y-2">
                 {tracks.length === 0 ? (
