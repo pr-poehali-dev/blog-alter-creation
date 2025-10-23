@@ -24,6 +24,7 @@ export default function Index() {
   const [allStoryUsers, setAllStoryUsers] = useState<number[]>([]);
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [prevUnreadCount, setPrevUnreadCount] = useState(0);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -44,6 +45,14 @@ export default function Index() {
         const data = await response.json();
         if (Array.isArray(data)) {
           const count = data.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
+          
+          if (count > prevUnreadCount && prevUnreadCount > 0) {
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(err => console.log('Audio play failed:', err));
+          }
+          
+          setPrevUnreadCount(count);
           setUnreadCount(count);
         }
       } catch (error) {
@@ -54,7 +63,7 @@ export default function Index() {
     loadUnreadCount();
     const interval = setInterval(loadUnreadCount, 5000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, prevUnreadCount]);
 
   const loadPosts = async () => {
     try {
