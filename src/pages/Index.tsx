@@ -11,7 +11,7 @@ import StoriesBar from '@/components/stories/StoriesBar';
 import StoryViewer from '@/components/stories/StoryViewer';
 import CreateStoryDialog from '@/components/stories/CreateStoryDialog';
 import MessagesPage from '@/components/messages/MessagesPage';
-import { User, Post, AUTH_URL, POSTS_URL } from '@/lib/types';
+import { User, Post, AUTH_URL, POSTS_URL, MESSAGES_URL } from '@/lib/types';
 
 export default function Index() {
   const [user, setUser] = useState<User | null>(null);
@@ -23,6 +23,7 @@ export default function Index() {
   const [viewingStoryUserId, setViewingStoryUserId] = useState<number | null>(null);
   const [allStoryUsers, setAllStoryUsers] = useState<number[]>([]);
   const [showCreateStory, setShowCreateStory] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -33,6 +34,27 @@ export default function Index() {
     loadPosts();
     loadStories();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadUnreadCount = async () => {
+      try {
+        const response = await fetch(`${MESSAGES_URL}?action=get_chats&user_id=${user.id}`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          const count = data.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
+          setUnreadCount(count);
+        }
+      } catch (error) {
+        console.error('Error loading unread count:', error);
+      }
+    };
+
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const loadPosts = async () => {
     try {
@@ -180,6 +202,7 @@ export default function Index() {
         isLogin={isLogin}
         setIsLogin={setIsLogin}
         handleAuth={handleAuth}
+        unreadCount={unreadCount}
       />
 
       <StoriesBar
@@ -211,7 +234,7 @@ export default function Index() {
 
         {activeSection === 'authors' && <AuthorsPage posts={posts} />}
 
-        {activeSection === 'messages' && <MessagesPage user={user} />}
+        {activeSection === 'messages' && <MessagesPage user={user} onUnreadCountChange={setUnreadCount} />}
 
         {activeSection === 'about' && <AboutPage />}
       </main>

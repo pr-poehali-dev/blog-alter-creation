@@ -29,3 +29,4 @@ export interface Post {
 
 export const AUTH_URL = 'https://functions.poehali.dev/939b7a78-ca7f-47fb-87a7-d0d621a3d141';
 export const POSTS_URL = 'https://functions.poehali.dev/73b67c32-f278-4cd4-8c63-4e2534d8f137';
+export const MESSAGES_URL = 'https://functions.poehali.dev/messages';

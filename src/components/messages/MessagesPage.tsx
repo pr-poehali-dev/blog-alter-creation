@@ -18,9 +18,10 @@ interface Chat {
 
 interface MessagesPageProps {
   user: User | null;
+  onUnreadCountChange?: (count: number) => void;
 }
 
-export default function MessagesPage({ user }: MessagesPageProps) {
+export default function MessagesPage({ user, onUnreadCountChange }: MessagesPageProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChatUserId, setSelectedChatUserId] = useState<number | null>(null);
@@ -40,6 +41,11 @@ export default function MessagesPage({ user }: MessagesPageProps) {
       );
       const data = await response.json();
       setChats(data);
+      
+      const unreadTotal = data.reduce((sum: number, chat: Chat) => sum + chat.unread_count, 0);
+      if (onUnreadCountChange) {
+        onUnreadCountChange(unreadTotal);
+      }
     } catch (error) {
       console.error('Error fetching chats:', error);
     } finally {

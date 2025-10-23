@@ -14,6 +14,7 @@ interface NavbarProps {
   isLogin: boolean;
   setIsLogin: (isLogin: boolean) => void;
   handleAuth: (e: React.FormEvent<HTMLFormElement>) => void;
+  unreadCount?: number;
 }
 
 export default function Navbar({
@@ -25,6 +26,7 @@ export default function Navbar({
   isLogin,
   setIsLogin,
   handleAuth,
+  unreadCount = 0,
 }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b">
@@ -39,14 +41,23 @@ export default function Navbar({
                 <button
                   key={section}
                   onClick={() => setActiveSection(section)}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-colors relative ${
                     activeSection === section ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {section === 'home' && 'Главная'}
                   {section === 'blogs' && 'Блоги'}
                   {section === 'authors' && 'Авторы'}
-                  {section === 'messages' && 'Сообщения'}
+                  {section === 'messages' && (
+                    <>
+                      Сообщения
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </>
+                  )}
                   {section === 'about' && 'О нас'}
                 </button>
               ))}
