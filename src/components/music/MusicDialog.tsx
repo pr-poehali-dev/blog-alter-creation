@@ -1,5 +1,13 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
@@ -105,12 +113,37 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
     }
   };
 
-  const handleAddToPlaylist = (trackId: string, playlistId: string) => {
+  const handleMoveToPlaylist = (trackId: string, fromPlaylistId: string | null, toPlaylistId: string) => {
+    if (fromPlaylistId) {
+      setPlaylists(playlists.map(p => {
+        if (p.id === fromPlaylistId) {
+          return { ...p, trackIds: p.trackIds.filter(id => id !== trackId) };
+        }
+        if (p.id === toPlaylistId) {
+          return { ...p, trackIds: [...p.trackIds, trackId] };
+        }
+        return p;
+      }));
+    } else {
+      setPlaylists(playlists.map(p => 
+        p.id === toPlaylistId 
+          ? { ...p, trackIds: [...p.trackIds, trackId] }
+          : p
+      ));
+    }
+  };
+
+  const handleRemoveFromPlaylist = (trackId: string, playlistId: string) => {
     setPlaylists(playlists.map(p => 
       p.id === playlistId 
-        ? { ...p, trackIds: [...p.trackIds, trackId] }
+        ? { ...p, trackIds: p.trackIds.filter(id => id !== trackId) }
         : p
     ));
+  };
+
+  const getTrackPlaylist = (trackId: string): string | null => {
+    const playlist = playlists.find(p => p.trackIds.includes(trackId));
+    return playlist ? playlist.id : null;
   };
 
   const getPlaylistTracks = (playlistId: string) => {
@@ -314,6 +347,42 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                             <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
                           </div>
                           <span className="text-xs text-muted-foreground shrink-0">{track.duration}</span>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" className="shrink-0">
+                                <Icon name="MoreVertical" size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Переместить в</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {playlists
+                                .filter(p => p.id !== selectedPlaylist)
+                                .map(playlist => (
+                                  <DropdownMenuItem
+                                    key={playlist.id}
+                                    onClick={() => handleMoveToPlaylist(track.id, selectedPlaylist, playlist.id)}
+                                  >
+                                    <Icon name="ListMusic" size={14} className="mr-2" />
+                                    {playlist.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              {playlists.filter(p => p.id !== selectedPlaylist).length === 0 && (
+                                <DropdownMenuItem disabled>
+                                  Нет других плейлистов
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleRemoveFromPlaylist(track.id, selectedPlaylist!)}
+                              >
+                                <Icon name="FolderMinus" size={14} className="mr-2" />
+                                Убрать из плейлиста
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          
                           <Button
                             size="icon"
                             variant="ghost"
@@ -434,39 +503,88 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                     <p className="text-sm">Добавьте музыку, чтобы слушать её здесь</p>
                   </div>
                 ) : (
-                  tracks.map((track) => (
-                    <div
-                      key={track.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors ${
-                        currentTrack?.id === track.id ? 'bg-muted' : ''
-                      }`}
-                    >
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handlePlayTrack(track)}
-                        className="shrink-0"
+                  tracks.map((track) => {
+                    const currentPlaylistId = getTrackPlaylist(track.id);
+                    return (
+                      <div
+                        key={track.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors ${
+                          currentTrack?.id === track.id ? 'bg-muted' : ''
+                        }`}
                       >
-                        <Icon
-                          name={currentTrack?.id === track.id && isPlaying ? 'Pause' : 'Play'}
-                          size={16}
-                        />
-                      </Button>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{track.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handlePlayTrack(track)}
+                          className="shrink-0"
+                        >
+                          <Icon
+                            name={currentTrack?.id === track.id && isPlaying ? 'Pause' : 'Play'}
+                            size={16}
+                          />
+                        </Button>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{track.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {track.artist}
+                            {currentPlaylistId && (
+                              <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                {playlists.find(p => p.id === currentPlaylistId)?.name}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">{track.duration}</span>
+                        
+                        {playlists.length > 0 && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" className="shrink-0">
+                                <Icon name="FolderInput" size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>
+                                {currentPlaylistId ? 'Переместить в' : 'Добавить в плейлист'}
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {playlists
+                                .filter(p => p.id !== currentPlaylistId)
+                                .map(playlist => (
+                                  <DropdownMenuItem
+                                    key={playlist.id}
+                                    onClick={() => handleMoveToPlaylist(track.id, currentPlaylistId, playlist.id)}
+                                  >
+                                    <Icon name="ListMusic" size={14} className="mr-2" />
+                                    {playlist.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              {currentPlaylistId && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleRemoveFromPlaylist(track.id, currentPlaylistId)}
+                                  >
+                                    <Icon name="FolderMinus" size={14} className="mr-2" />
+                                    Убрать из плейлиста
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                        
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDeleteTrack(track.id)}
+                          className="shrink-0 text-destructive hover:text-destructive"
+                        >
+                          <Icon name="Trash2" size={16} />
+                        </Button>
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">{track.duration}</span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeleteTrack(track.id)}
-                        className="shrink-0 text-destructive hover:text-destructive"
-                      >
-                        <Icon name="Trash2" size={16} />
-                      </Button>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </>
