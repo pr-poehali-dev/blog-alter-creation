@@ -25,6 +25,10 @@ export default function Index() {
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [prevUnreadCount, setPrevUnreadCount] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem('soundEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -46,7 +50,7 @@ export default function Index() {
         if (Array.isArray(data)) {
           const count = data.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
           
-          if (count > prevUnreadCount && prevUnreadCount > 0) {
+          if (count > prevUnreadCount && prevUnreadCount > 0 && soundEnabled) {
             const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
             audio.volume = 0.5;
             audio.play().catch(err => console.log('Audio play failed:', err));
@@ -171,6 +175,11 @@ export default function Index() {
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
+  const handleSoundToggle = (enabled: boolean) => {
+    setSoundEnabled(enabled);
+    localStorage.setItem('soundEnabled', JSON.stringify(enabled));
+  };
+
   const handleStoryClick = (userId: number, allStories: any[]) => {
     setViewingStoryUserId(userId);
     setAllStoryUsers(allStories.map(s => s.user_id));
@@ -236,7 +245,14 @@ export default function Index() {
         )}
 
         {activeSection === 'profile' && (
-          <ProfilePage user={user} posts={posts} handleLogout={handleLogout} onProfileUpdate={handleProfileUpdate} />
+          <ProfilePage 
+            user={user} 
+            posts={posts} 
+            handleLogout={handleLogout} 
+            onProfileUpdate={handleProfileUpdate}
+            soundEnabled={soundEnabled}
+            onSoundToggle={handleSoundToggle}
+          />
         )}
 
         {activeSection === 'blogs' && <BlogsPage posts={posts} />}

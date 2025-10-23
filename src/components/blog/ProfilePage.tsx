@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { User, Post, AUTH_URL } from '@/lib/types';
 
@@ -14,9 +15,11 @@ interface ProfilePageProps {
   posts: Post[];
   handleLogout: () => void;
   onProfileUpdate: (user: User) => void;
+  soundEnabled: boolean;
+  onSoundToggle: (enabled: boolean) => void;
 }
 
-export default function ProfilePage({ user, posts, handleLogout, onProfileUpdate }: ProfilePageProps) {
+export default function ProfilePage({ user, posts, handleLogout, onProfileUpdate, soundEnabled, onSoundToggle }: ProfilePageProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -151,6 +154,16 @@ export default function ProfilePage({ user, posts, handleLogout, onProfileUpdate
                           </Avatar>
                         </div>
                       )}
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-t">
+                      <div>
+                        <label className="text-sm font-medium block mb-1">Звук уведомлений</label>
+                        <p className="text-xs text-muted-foreground">Воспроизводить звук при новых сообщениях</p>
+                      </div>
+                      <Switch
+                        checked={soundEnabled}
+                        onCheckedChange={onSoundToggle}
+                      />
                     </div>
                     <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary">
                       Сохранить изменения
