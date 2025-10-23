@@ -1,32 +1,15 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { User } from '@/lib/types';
-
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  url: string;
-  duration: string;
-  playlistId?: string;
-}
-
-interface Playlist {
-  id: string;
-  name: string;
-  trackIds: string[];
-}
+import { Track, Playlist } from './types';
+import NowPlaying from './NowPlaying';
+import AddTrackForm from './AddTrackForm';
+import CreatePlaylistForm from './CreatePlaylistForm';
+import TrackItem from './TrackItem';
+import PlaylistItem from './PlaylistItem';
+import EmptyState from './EmptyState';
 
 interface MusicDialogProps {
   open: boolean;
@@ -188,26 +171,11 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-4">
-          {currentTrack && (
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-4 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-                  <Icon name="Music2" size={24} className="text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold truncate">{currentTrack.title}</h4>
-                  <p className="text-sm text-muted-foreground truncate">{currentTrack.artist}</p>
-                </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setIsPlaying(!isPlaying)}
-                >
-                  <Icon name={isPlaying ? 'Pause' : 'Play'} size={20} />
-                </Button>
-              </div>
-            </div>
-          )}
+          <NowPlaying
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            onTogglePlay={() => setIsPlaying(!isPlaying)}
+          />
 
           {view === 'playlists' ? (
             <>
@@ -252,146 +220,41 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
               </div>
 
               {showPlaylistForm && (
-                <form onSubmit={handleCreatePlaylist} className="bg-muted p-4 rounded-lg space-y-3">
-                  <Input name="name" placeholder="Название плейлиста" required />
-                  <div className="flex gap-2">
-                    <Button type="submit" size="sm" className="flex-1">
-                      <Icon name="Check" size={16} className="mr-2" />
-                      Создать
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowPlaylistForm(false)}
-                    >
-                      Отмена
-                    </Button>
-                  </div>
-                </form>
+                <CreatePlaylistForm
+                  onSubmit={handleCreatePlaylist}
+                  onCancel={() => setShowPlaylistForm(false)}
+                />
               )}
 
               {selectedPlaylist ? (
                 <>
                   {showAddForm && (
-                    <form onSubmit={handleAddTrack} className="bg-muted p-4 rounded-lg space-y-3">
-                      <Input name="title" placeholder="Название трека" required />
-                      <Input name="artist" placeholder="Исполнитель" required />
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Аудиофайл</label>
-                        <Input
-                          type="file"
-                          accept="audio/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                const input = document.createElement('input');
-                                input.type = 'hidden';
-                                input.name = 'audioUrl';
-                                input.value = reader.result as string;
-                                e.target.form?.appendChild(input);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className="cursor-pointer"
-                          required
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button type="submit" size="sm" className="flex-1">
-                          <Icon name="Check" size={16} className="mr-2" />
-                          Сохранить
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setShowAddForm(false)}
-                        >
-                          Отмена
-                        </Button>
-                      </div>
-                    </form>
+                    <AddTrackForm
+                      onSubmit={handleAddTrack}
+                      onCancel={() => setShowAddForm(false)}
+                    />
                   )}
 
                   <div className="space-y-2">
                     {displayTracks.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <Icon name="Music" size={48} className="mx-auto mb-4 opacity-20" />
-                        <p>В плейлисте пока нет треков</p>
-                      </div>
+                      <EmptyState
+                        icon="Music"
+                        title="В плейлисте пока нет треков"
+                      />
                     ) : (
                       displayTracks.map((track) => (
-                        <div
+                        <TrackItem
                           key={track.id}
-                          className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors ${
-                            currentTrack?.id === track.id ? 'bg-muted' : ''
-                          }`}
-                        >
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handlePlayTrack(track)}
-                            className="shrink-0"
-                          >
-                            <Icon
-                              name={currentTrack?.id === track.id && isPlaying ? 'Pause' : 'Play'}
-                              size={16}
-                            />
-                          </Button>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{track.title}</p>
-                            <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
-                          </div>
-                          <span className="text-xs text-muted-foreground shrink-0">{track.duration}</span>
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost" className="shrink-0">
-                                <Icon name="MoreVertical" size={16} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Переместить в</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {playlists
-                                .filter(p => p.id !== selectedPlaylist)
-                                .map(playlist => (
-                                  <DropdownMenuItem
-                                    key={playlist.id}
-                                    onClick={() => handleMoveToPlaylist(track.id, selectedPlaylist, playlist.id)}
-                                  >
-                                    <Icon name="ListMusic" size={14} className="mr-2" />
-                                    {playlist.name}
-                                  </DropdownMenuItem>
-                                ))}
-                              {playlists.filter(p => p.id !== selectedPlaylist).length === 0 && (
-                                <DropdownMenuItem disabled>
-                                  Нет других плейлистов
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleRemoveFromPlaylist(track.id, selectedPlaylist!)}
-                              >
-                                <Icon name="FolderMinus" size={14} className="mr-2" />
-                                Убрать из плейлиста
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDeleteTrack(track.id)}
-                            className="shrink-0 text-destructive hover:text-destructive"
-                          >
-                            <Icon name="Trash2" size={16} />
-                          </Button>
-                        </div>
+                          track={track}
+                          isPlaying={isPlaying}
+                          isCurrent={currentTrack?.id === track.id}
+                          playlists={playlists}
+                          currentPlaylistId={selectedPlaylist}
+                          onPlay={handlePlayTrack}
+                          onDelete={handleDeleteTrack}
+                          onMoveToPlaylist={handleMoveToPlaylist}
+                          onRemoveFromPlaylist={handleRemoveFromPlaylist}
+                        />
                       ))
                     )}
                   </div>
@@ -399,39 +262,19 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
               ) : (
                 <div className="space-y-2">
                   {playlists.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Icon name="ListMusic" size={48} className="mx-auto mb-4 opacity-20" />
-                      <p>У вас пока нет плейлистов</p>
-                      <p className="text-sm">Создайте плейлист для группировки треков</p>
-                    </div>
+                    <EmptyState
+                      icon="ListMusic"
+                      title="У вас пока нет плейлистов"
+                      description="Создайте плейлист для группировки треков"
+                    />
                   ) : (
                     playlists.map((playlist) => (
-                      <div
+                      <PlaylistItem
                         key={playlist.id}
-                        className="flex items-center gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        playlist={playlist}
                         onClick={() => setSelectedPlaylist(playlist.id)}
-                      >
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center">
-                          <Icon name="ListMusic" size={24} className="text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{playlist.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {playlist.trackIds.length} {playlist.trackIds.length === 1 ? 'трек' : 'треков'}
-                          </p>
-                        </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePlaylist(playlist.id);
-                          }}
-                          className="shrink-0 text-destructive hover:text-destructive"
-                        >
-                          <Icon name="Trash2" size={16} />
-                        </Button>
-                      </div>
+                        onDelete={handleDeletePlaylist}
+                      />
                     ))
                   )}
                 </div>
@@ -452,137 +295,36 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
               </div>
 
               {showAddForm && (
-                <form onSubmit={handleAddTrack} className="bg-muted p-4 rounded-lg space-y-3">
-                  <Input name="title" placeholder="Название трека" required />
-                  <Input name="artist" placeholder="Исполнитель" required />
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Аудиофайл</label>
-                    <Input
-                      type="file"
-                      accept="audio/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = 'audioUrl';
-                            input.value = reader.result as string;
-                            e.target.form?.appendChild(input);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="cursor-pointer"
-                      required
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" size="sm" className="flex-1">
-                      <Icon name="Check" size={16} className="mr-2" />
-                      Сохранить
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowAddForm(false)}
-                    >
-                      Отмена
-                    </Button>
-                  </div>
-                </form>
+                <AddTrackForm
+                  onSubmit={handleAddTrack}
+                  onCancel={() => setShowAddForm(false)}
+                />
               )}
 
               <div className="space-y-2">
                 {tracks.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Icon name="Music" size={48} className="mx-auto mb-4 opacity-20" />
-                    <p>У вас пока нет треков</p>
-                    <p className="text-sm">Добавьте музыку, чтобы слушать её здесь</p>
-                  </div>
+                  <EmptyState
+                    icon="Music"
+                    title="У вас пока нет треков"
+                    description="Добавьте музыку, чтобы слушать её здесь"
+                  />
                 ) : (
                   tracks.map((track) => {
                     const currentPlaylistId = getTrackPlaylist(track.id);
                     return (
-                      <div
+                      <TrackItem
                         key={track.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors ${
-                          currentTrack?.id === track.id ? 'bg-muted' : ''
-                        }`}
-                      >
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handlePlayTrack(track)}
-                          className="shrink-0"
-                        >
-                          <Icon
-                            name={currentTrack?.id === track.id && isPlaying ? 'Pause' : 'Play'}
-                            size={16}
-                          />
-                        </Button>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{track.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {track.artist}
-                            {currentPlaylistId && (
-                              <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                {playlists.find(p => p.id === currentPlaylistId)?.name}
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0">{track.duration}</span>
-                        
-                        {playlists.length > 0 && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost" className="shrink-0">
-                                <Icon name="FolderInput" size={16} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>
-                                {currentPlaylistId ? 'Переместить в' : 'Добавить в плейлист'}
-                              </DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {playlists
-                                .filter(p => p.id !== currentPlaylistId)
-                                .map(playlist => (
-                                  <DropdownMenuItem
-                                    key={playlist.id}
-                                    onClick={() => handleMoveToPlaylist(track.id, currentPlaylistId, playlist.id)}
-                                  >
-                                    <Icon name="ListMusic" size={14} className="mr-2" />
-                                    {playlist.name}
-                                  </DropdownMenuItem>
-                                ))}
-                              {currentPlaylistId && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => handleRemoveFromPlaylist(track.id, currentPlaylistId)}
-                                  >
-                                    <Icon name="FolderMinus" size={14} className="mr-2" />
-                                    Убрать из плейлиста
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                        
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDeleteTrack(track.id)}
-                          className="shrink-0 text-destructive hover:text-destructive"
-                        >
-                          <Icon name="Trash2" size={16} />
-                        </Button>
-                      </div>
+                        track={track}
+                        isPlaying={isPlaying}
+                        isCurrent={currentTrack?.id === track.id}
+                        playlists={playlists}
+                        currentPlaylistId={currentPlaylistId}
+                        showPlaylistMenu={true}
+                        onPlay={handlePlayTrack}
+                        onDelete={handleDeleteTrack}
+                        onMoveToPlaylist={handleMoveToPlaylist}
+                        onRemoveFromPlaylist={handleRemoveFromPlaylist}
+                      />
                     );
                   })
                 )}
