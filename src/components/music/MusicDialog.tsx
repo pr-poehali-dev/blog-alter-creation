@@ -39,11 +39,18 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
   const handleAddTrack = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const audioUrl = formData.get('audioUrl') as string;
+    
+    if (!audioUrl) {
+      alert('Пожалуйста, выберите аудиофайл');
+      return;
+    }
+    
     const newTrack: Track = {
       id: Date.now().toString(),
       title: formData.get('title') as string,
       artist: formData.get('artist') as string,
-      url: formData.get('url') as string,
+      url: audioUrl,
       duration: '3:45',
       playlistId: selectedPlaylist || undefined,
     };
@@ -237,7 +244,29 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                     <form onSubmit={handleAddTrack} className="bg-muted p-4 rounded-lg space-y-3">
                       <Input name="title" placeholder="Название трека" required />
                       <Input name="artist" placeholder="Исполнитель" required />
-                      <Input name="url" type="url" placeholder="Ссылка на трек (mp3, ogg)" required />
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Аудиофайл</label>
+                        <Input
+                          type="file"
+                          accept="audio/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'audioUrl';
+                                input.value = reader.result as string;
+                                e.target.form?.appendChild(input);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="cursor-pointer"
+                          required
+                        />
+                      </div>
                       <div className="flex gap-2">
                         <Button type="submit" size="sm" className="flex-1">
                           <Icon name="Check" size={16} className="mr-2" />
@@ -357,7 +386,29 @@ export default function MusicDialog({ open, onOpenChange, user }: MusicDialogPro
                 <form onSubmit={handleAddTrack} className="bg-muted p-4 rounded-lg space-y-3">
                   <Input name="title" placeholder="Название трека" required />
                   <Input name="artist" placeholder="Исполнитель" required />
-                  <Input name="url" type="url" placeholder="Ссылка на трек (mp3, ogg)" required />
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Аудиофайл</label>
+                    <Input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'audioUrl';
+                            input.value = reader.result as string;
+                            e.target.form?.appendChild(input);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="cursor-pointer"
+                      required
+                    />
+                  </div>
                   <div className="flex gap-2">
                     <Button type="submit" size="sm" className="flex-1">
                       <Icon name="Check" size={16} className="mr-2" />
