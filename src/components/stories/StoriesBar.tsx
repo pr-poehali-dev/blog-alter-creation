@@ -79,7 +79,7 @@ export default function StoriesBar({ currentUserId, onStoryClick, onCreateStory 
           
           {stories.map((story) => (
             <button
-              key={story.user_id}
+              key={`story-${story.user_id}`}
               onClick={() => onStoryClick(story.user_id, stories)}
               className="flex flex-col items-center gap-1 flex-shrink-0 group"
             >

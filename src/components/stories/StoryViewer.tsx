@@ -21,12 +21,18 @@ interface StoryViewerProps {
   onPrev: () => void;
 }
 
+interface Viewer {
+  viewer_id: number;
+  viewed_at: string;
+}
+
 export default function StoryViewer({ userId, currentUserId, onClose, onNext, onPrev }: StoryViewerProps) {
   const [stories, setStories] = useState<Story[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showViewers, setShowViewers] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const STORY_DURATION = 5000;
 
@@ -169,12 +175,23 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="text-white hover:opacity-75 transition-opacity"
-          >
-            <Icon name="X" size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            {userId === currentUserId && currentStory.views && currentStory.views.length > 0 && (
+              <button
+                onClick={() => setShowViewers(true)}
+                className="text-white hover:opacity-75 transition-opacity flex items-center gap-1"
+              >
+                <Icon name="Eye" size={20} />
+                <span className="text-sm">{currentStory.views.length}</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-white hover:opacity-75 transition-opacity"
+            >
+              <Icon name="X" size={24} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -207,6 +224,37 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
       >
         <Icon name="ChevronRight" size={48} />
       </button>
+
+      {showViewers && userId === currentUserId && (
+        <div className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm max-h-[50vh] overflow-y-auto">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-semibold text-lg">
+                Просмотры ({currentStory.views?.length || 0})
+              </h3>
+              <button
+                onClick={() => setShowViewers(false)}
+                className="text-white hover:opacity-75"
+              >
+                <Icon name="X" size={20} />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {currentStory.views?.map((view: any) => (
+                <div key={view.viewer_id} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/20" />
+                  <div className="text-white">
+                    <div className="text-sm font-medium">Пользователь #{view.viewer_id}</div>
+                    <div className="text-xs opacity-75">
+                      {new Date(view.viewed_at).toLocaleString('ru-RU')}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
