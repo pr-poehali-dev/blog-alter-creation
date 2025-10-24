@@ -12,6 +12,7 @@ import StoryViewer from '@/components/stories/StoryViewer';
 import CreateStoryDialog from '@/components/stories/CreateStoryDialog';
 import MessagesPage from '@/components/messages/MessagesPage';
 import ReelsPage from '@/components/reels/ReelsPage';
+import MobileBottomNav from '@/components/blog/MobileBottomNav';
 import { User, Post, AUTH_URL, POSTS_URL, MESSAGES_URL } from '@/lib/types';
 
 export default function Index() {
@@ -232,7 +233,7 @@ export default function Index() {
         />
       )}
 
-      <main className={activeSection === 'reels' ? '' : 'container mx-auto px-4 py-8'}>
+      <main className={`${activeSection === 'reels' ? '' : 'container mx-auto px-4 py-8'} pb-20 md:pb-8`}>
         {activeSection === 'home' && (
           <HomePage
             user={user}
@@ -270,6 +271,13 @@ export default function Index() {
       </main>
 
       {activeSection !== 'reels' && <Footer />}
+
+      <MobileBottomNav
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        user={user}
+        unreadCount={unreadCount}
+      />
 
       {viewingStoryUserId && (
         <StoryViewer

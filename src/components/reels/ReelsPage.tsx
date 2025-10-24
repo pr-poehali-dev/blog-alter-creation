@@ -5,6 +5,7 @@ import Icon from '@/components/ui/icon';
 import { User, Reel } from '@/lib/types';
 import CreateReelDialog from './CreateReelDialog';
 import ReelComments from './ReelComments';
+import { useSwipe } from '@/hooks/useSwipe';
 
 interface ReelsPageProps {
   user: User | null;
@@ -61,15 +62,26 @@ export default function ReelsPage({ user }: ReelsPageProps) {
     return () => observer.disconnect();
   }, [reels]);
 
-  const handleScroll = (e: React.WheelEvent) => {
-    if (e.deltaY > 0 && currentIndex < reels.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      containerRef.current?.children[currentIndex + 1].scrollIntoView({ behavior: 'smooth' });
-    } else if (e.deltaY < 0 && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-      containerRef.current?.children[currentIndex - 1].scrollIntoView({ behavior: 'smooth' });
+  const scrollToReel = (index: number) => {
+    if (index >= 0 && index < reels.length) {
+      setCurrentIndex(index);
+      containerRef.current?.children[index].scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const handleScroll = (e: React.WheelEvent) => {
+    if (e.deltaY > 0 && currentIndex < reels.length - 1) {
+      scrollToReel(currentIndex + 1);
+    } else if (e.deltaY < 0 && currentIndex > 0) {
+      scrollToReel(currentIndex - 1);
+    }
+  };
+
+  const swipeHandlers = useSwipe({
+    onSwipeUp: () => scrollToReel(currentIndex + 1),
+    onSwipeDown: () => scrollToReel(currentIndex - 1),
+    threshold: 50,
+  });
 
   const handleLike = (reelId: number) => {
     setReels(
@@ -138,6 +150,9 @@ export default function ReelsPage({ user }: ReelsPageProps) {
         ref={containerRef}
         className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
         onWheel={handleScroll}
+        onTouchStart={swipeHandlers.onTouchStart}
+        onTouchMove={swipeHandlers.onTouchMove}
+        onTouchEnd={swipeHandlers.onTouchEnd}
       >
         {reels.map((reel, index) => (
           <div

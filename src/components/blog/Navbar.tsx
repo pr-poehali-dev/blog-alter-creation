@@ -31,8 +31,10 @@ export default function Navbar({
   unreadCount = 0,
 }: NavbarProps) {
   const [showMusicDialog, setShowMusicDialog] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
+    <>
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
@@ -69,7 +71,15 @@ export default function Navbar({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden"
+            >
+              <Icon name={mobileMenuOpen ? 'X' : 'Menu'} size={24} />
+            </Button>
             {user ? (
               <>
                 <Button
@@ -131,8 +141,61 @@ export default function Navbar({
             )}
           </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 border-t pt-4 space-y-2">
+            {['home', 'blogs', 'reels', 'authors', 'messages', 'about'].map((section) => (
+              <button
+                key={section}
+                onClick={() => {
+                  setActiveSection(section);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-between ${
+                  activeSection === section
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-accent'
+                }`}
+              >
+                <span>
+                  {section === 'home' && '🏠 Главная'}
+                  {section === 'blogs' && '📝 Блоги'}
+                  {section === 'reels' && '🎬 Reels'}
+                  {section === 'authors' && '👥 Авторы'}
+                  {section === 'messages' && '💬 Сообщения'}
+                  {section === 'about' && 'ℹ️ О нас'}
+                </span>
+                {section === 'messages' && unreadCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 font-bold">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            ))}
+            {user && (
+              <button
+                onClick={() => {
+                  setActiveSection('create');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-4 py-3 rounded-lg font-medium bg-gradient-to-r from-primary to-secondary text-white flex items-center gap-2"
+              >
+                <Icon name="PenSquare" size={16} />
+                Создать пост
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <MusicDialog open={showMusicDialog} onOpenChange={setShowMusicDialog} user={user} />
     </nav>
+
+    {mobileMenuOpen && (
+      <div
+        className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        onClick={() => setMobileMenuOpen(false)}
+      />
+    )}
+    </>
   );
 }

@@ -119,4 +119,22 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  @supports (-webkit-touch-callout: none) {
+    .safe-area-pb {
+      padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+    }
+  }
+
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .tap-highlight-transparent {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
