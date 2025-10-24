@@ -33,7 +33,11 @@ export default function Index() {
     return saved !== null ? JSON.parse(saved) : true;
   });
 
-  const sections = ['home', 'blogs', 'reels', 'authors', 'messages', 'about'];
+  const sections = ['home', 'blogs', 'reels', 'authors', 'messages', 'about']
+    .filter(section => {
+      if (!user && (section === 'reels' || section === 'messages')) return false;
+      return true;
+    });
 
   const navigateToSection = (direction: 'left' | 'right') => {
     const currentIndex = sections.indexOf(activeSection);

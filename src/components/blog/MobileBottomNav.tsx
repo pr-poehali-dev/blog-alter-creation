@@ -18,15 +18,15 @@ export default function MobileBottomNav({
   const navItems = [
     { id: 'home', icon: 'Home', label: 'Главная' },
     { id: 'blogs', icon: 'BookOpen', label: 'Блоги' },
-    { id: 'reels', icon: 'Video', label: 'Reels' },
-    { id: 'messages', icon: 'MessageCircle', label: 'Чаты', badge: unreadCount },
+    { id: 'reels', icon: 'Video', label: 'Reels', requireAuth: true },
+    { id: 'messages', icon: 'MessageCircle', label: 'Чаты', badge: unreadCount, requireAuth: true },
     { id: 'profile', icon: 'User', label: 'Профиль', isProfile: true },
-  ];
+  ].filter(item => !item.requireAuth || user);
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg touch-manipulation tap-highlight-transparent">
       <div className="flex items-center justify-around px-2 py-2 safe-area-pb">
-        {navItems.map((item) => {
+        {navItems.filter(item => !item.requireAuth || user).map((item) => {
           const isActive = activeSection === item.id;
           
           return (

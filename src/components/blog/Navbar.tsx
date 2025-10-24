@@ -43,7 +43,12 @@ export default function Navbar({
               Vega Blog
             </h1>
             <div className="hidden md:flex gap-6">
-              {['home', 'blogs', 'reels', 'authors', 'messages', 'about'].map((section) => (
+              {['home', 'blogs', 'reels', 'authors', 'messages', 'about']
+                .filter(section => {
+                  if (!user && (section === 'reels' || section === 'messages')) return false;
+                  return true;
+                })
+                .map((section) => (
                 <button
                   key={section}
                   onClick={() => setActiveSection(section)}
@@ -144,7 +149,12 @@ export default function Navbar({
 
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t pt-4 space-y-2">
-            {['home', 'blogs', 'reels', 'authors', 'messages', 'about'].map((section) => (
+            {['home', 'blogs', 'reels', 'authors', 'messages', 'about']
+              .filter(section => {
+                if (!user && (section === 'reels' || section === 'messages')) return false;
+                return true;
+              })
+              .map((section) => (
               <button
                 key={section}
                 onClick={() => {
