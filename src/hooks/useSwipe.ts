@@ -35,14 +35,24 @@ export function useSwipe(options: SwipeOptions) {
     };
   };
 
+  const vibrate = (pattern: number | number[]) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
   const onTouchEnd = () => {
     if (!touchStart.current || !touchEnd.current) return;
 
     const xDiff = touchStart.current.x - touchEnd.current.x;
     const yDiff = touchStart.current.y - touchEnd.current.y;
 
+    let swiped = false;
+
     if (Math.abs(xDiff) > Math.abs(yDiff)) {
       if (Math.abs(xDiff) > threshold) {
+        vibrate(10);
+        swiped = true;
         if (xDiff > 0) {
           onSwipeLeft?.();
         } else {
@@ -51,6 +61,8 @@ export function useSwipe(options: SwipeOptions) {
       }
     } else {
       if (Math.abs(yDiff) > threshold) {
+        vibrate(10);
+        swiped = true;
         if (yDiff > 0) {
           onSwipeUp?.();
         } else {

@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
 import { Post, User } from '@/lib/types';
+import RegisterBanner from './RegisterBanner';
 
 interface HomePageProps {
   user: User | null;
@@ -15,6 +16,9 @@ interface HomePageProps {
 export default function HomePage({ user, posts, stories, setActiveSection, setShowAuthDialog }: HomePageProps) {
   return (
     <div className="space-y-12">
+      {!user && (
+        <RegisterBanner onRegisterClick={() => setShowAuthDialog(true)} />
+      )}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-secondary to-primary p-12 text-white">
         <div className="relative z-10 max-w-3xl">
           <h2 className="text-5xl font-bold mb-4">Делись своими историями с миром</h2>
