@@ -108,7 +108,10 @@ export default function RegisterBanner({ onRegisterClick }: RegisterBannerProps)
             <Button
               onClick={onRegisterClick}
               size="lg"
-              className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+              className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 animate-[pulse-glow_2s_ease-in-out_infinite]"
+              style={{
+                animation: isVisible ? 'pulse-glow 2s ease-in-out infinite' : 'none'
+              }}
             >
               <Icon name="Sparkles" size={20} className="mr-2" />
               Начать бесплатно
