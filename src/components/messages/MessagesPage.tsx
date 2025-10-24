@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { User } from '@/lib/types';
 import ChatDialog from './ChatDialog';
+import { useSwipe } from '@/hooks/useSwipe';
 
 interface Chat {
   id: number;
@@ -25,6 +26,15 @@ export default function MessagesPage({ user, onUnreadCountChange }: MessagesPage
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChatUserId, setSelectedChatUserId] = useState<number | null>(null);
+  const [swipedChatId, setSwipedChatId] = useState<number | null>(null);
+  const chatRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  const handleChatSwipe = (chatId: number, direction: 'left' | 'right') => {
+    if (direction === 'left') {
+      setSwipedChatId(chatId);
+      setTimeout(() => setSwipedChatId(null), 2000);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -109,12 +119,39 @@ export default function MessagesPage({ user, onUnreadCountChange }: MessagesPage
           </div>
         ) : (
           <div className="space-y-2">
-            {chats.map((chat) => (
-              <button
+            {chats.map((chat) => {
+              const chatSwipeHandlers = useSwipe({
+                onSwipeLeft: () => handleChatSwipe(chat.other_user_id, 'left'),
+                threshold: 50,
+              });
+              
+              return (
+              <div
                 key={chat.other_user_id}
-                onClick={() => setSelectedChatUserId(chat.other_user_id)}
-                className="w-full flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                className="relative overflow-hidden"
+                ref={(el) => {
+                  if (el) chatRefs.current.set(chat.other_user_id, el);
+                }}
               >
+                {swipedChatId === chat.other_user_id && (
+                  <div className="absolute right-4 top-0 bottom-0 flex items-center gap-2 z-10">
+                    <button className="bg-red-500 text-white p-3 rounded-lg">
+                      <Icon name="Trash2" size={20} />
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={() => setSelectedChatUserId(chat.other_user_id)}
+                  onTouchStart={chatSwipeHandlers.onTouchStart}
+                  onTouchMove={chatSwipeHandlers.onTouchMove}
+                  onTouchEnd={chatSwipeHandlers.onTouchEnd}
+                  className={`w-full flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-all text-left ${
+                    swipedChatId === chat.other_user_id ? 'translate-x-[-80px]' : ''
+                  }`}
+                  style={{
+                    transition: swipedChatId === chat.other_user_id ? 'transform 0.3s ease-out' : 'transform 0.2s ease-in',
+                  }}
+                >
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={chat.avatar_url || undefined} />
                   <AvatarFallback>{chat.username?.[0]?.toUpperCase()}</AvatarFallback>
@@ -136,7 +173,9 @@ export default function MessagesPage({ user, onUnreadCountChange }: MessagesPage
                   </Badge>
                 )}
               </button>
-            ))}
+              </div>
+              );
+            })}
           </div>
         )}
       </Card>

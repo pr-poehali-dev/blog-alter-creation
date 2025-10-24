@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
 import ChatDialog from '@/components/messages/ChatDialog';
+import { useSwipe } from '@/hooks/useSwipe';
 
 interface Story {
   id: number;
@@ -37,6 +38,14 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
   const [showReplyDialog, setShowReplyDialog] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const STORY_DURATION = 5000;
+
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handlePrev,
+    onSwipeUp: onNext,
+    onSwipeDown: onClose,
+    threshold: 50,
+  });
 
   useEffect(() => {
     fetchUserStories();
@@ -157,6 +166,20 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
     }
   };
 
+  const handleTap = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const third = rect.width / 3;
+    
+    if (x < third) {
+      handlePrev();
+    } else if (x > third * 2) {
+      handleNext();
+    } else {
+      setIsPaused(!isPaused);
+    }
+  };
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -180,7 +203,12 @@ export default function StoryViewer({ userId, currentUserId, onClose, onNext, on
   const currentStory = stories[currentIndex];
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+    <div 
+      className="fixed inset-0 bg-black z-50 flex items-center justify-center"
+      onTouchStart={swipeHandlers.onTouchStart}
+      onTouchMove={swipeHandlers.onTouchMove}
+      onTouchEnd={swipeHandlers.onTouchEnd}
+    >
       <div className="absolute top-0 left-0 right-0 p-4 z-10">
         <div className="flex gap-1 mb-4">
           {stories.map((_, index) => (

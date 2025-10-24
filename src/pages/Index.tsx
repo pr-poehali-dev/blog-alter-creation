@@ -13,6 +13,7 @@ import CreateStoryDialog from '@/components/stories/CreateStoryDialog';
 import MessagesPage from '@/components/messages/MessagesPage';
 import ReelsPage from '@/components/reels/ReelsPage';
 import MobileBottomNav from '@/components/blog/MobileBottomNav';
+import { useSwipe } from '@/hooks/useSwipe';
 import { User, Post, AUTH_URL, POSTS_URL, MESSAGES_URL } from '@/lib/types';
 
 export default function Index() {
@@ -30,6 +31,23 @@ export default function Index() {
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem('soundEnabled');
     return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  const sections = ['home', 'blogs', 'reels', 'authors', 'messages', 'about'];
+
+  const navigateToSection = (direction: 'left' | 'right') => {
+    const currentIndex = sections.indexOf(activeSection);
+    if (direction === 'left' && currentIndex < sections.length - 1) {
+      setActiveSection(sections[currentIndex + 1]);
+    } else if (direction === 'right' && currentIndex > 0) {
+      setActiveSection(sections[currentIndex - 1]);
+    }
+  };
+
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => navigateToSection('left'),
+    onSwipeRight: () => navigateToSection('right'),
+    threshold: 100,
   });
 
   useEffect(() => {
@@ -212,7 +230,12 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/10">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-background to-secondary/10"
+      onTouchStart={swipeHandlers.onTouchStart}
+      onTouchMove={swipeHandlers.onTouchMove}
+      onTouchEnd={swipeHandlers.onTouchEnd}
+    >
       <Navbar
         user={user}
         activeSection={activeSection}
